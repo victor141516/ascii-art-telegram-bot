@@ -1,18 +1,21 @@
+import config
 from flask import Flask, request, make_response
-from pyfiglet import Figlet
 import json
 import os
+from pyfiglet import Figlet
+import random
 import sys
 import telebot
 from telebot import types
-import config
 
 server = Flask(__name__)
 bot = telebot.TeleBot(config.API_TOKEN)
 figlet = Figlet()
 
+
 def get_all_texts(figlet, text, fonts):
     all_texts = {}
+    fonts = sorted(fonts)
     for font in fonts:
         figlet.setFont(font=font)
         all_texts[font] = ""
@@ -29,10 +32,10 @@ def get_all_texts(figlet, text, fonts):
     return all_texts
 
 
-def search_fonts(search_term, fonts, max_elements):
+def search_fonts(search_term, fonts):
     if search_term is None:
         search_term = ""
-    return [font for font in fonts if search_term in font][:max_elements]
+    return [font for font in fonts if search_term in font]
 
 
 def parse_query(query):
@@ -50,7 +53,7 @@ def parse_query(query):
     return result
 
 
-def build_query_results(texts):
+def build_query_results(texts, randomize=True, max_elements=10):
     rs = []
     id = 0
     for font, text in texts.iteritems():
@@ -63,6 +66,12 @@ def build_query_results(texts):
                 parse_mode='Markdown'
             )
         ))
+
+    if randomize:
+        random.shuffle(rs)
+
+    if max_elements:
+        rs = rs[:max_elements]
 
     return rs
 
@@ -77,9 +86,9 @@ def default_query(inline_query):
     search_term = result['search_term']
     text = result['text']
 
-    fonts = search_fonts(search_term, config.ALLOWED_FONTS, 10)
+    fonts = search_fonts(search_term, config.ALLOWED_FONTS)
     all_texts = get_all_texts(figlet, text, fonts)
-    query_results = build_query_results(all_texts)
+    query_results = build_query_results(all_texts, randomize=not bool(search_term), max_elements=10)
     bot.answer_inline_query(inline_query.id, query_results, cache_time=2592000)
 
 

@@ -3,7 +3,7 @@ WEBHOOK_URL = ""
 NGINX_SUBPATH = ""
 POLLING = True
 ALLOWED_FONTS = [
-    "3d_diagonal"
+    "3d_diagonal",
     "alligator2",
     "alpha",
     "amcslash",
